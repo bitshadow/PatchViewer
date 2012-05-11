@@ -1,0 +1,105 @@
+# HG changeset patch
+# Parent 8332c91e169630fca70734a98fe723411210a33b
+# User Jignesh Kakadiya <jigneshhk1992@gmail.com>
+Bug 741697 - dexpcomify CAccessibleComponent, r=tbsaunde
+
+diff --git a/accessible/src/msaa/CAccessibleComponent.cpp b/accessible/src/msaa/CAccessibleComponent.cpp
+--- a/accessible/src/msaa/CAccessibleComponent.cpp
++++ b/accessible/src/msaa/CAccessibleComponent.cpp
+@@ -37,17 +37,17 @@
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "CAccessibleComponent.h"
+ 
+ #include "AccessibleComponent_i.c"
+ 
+-#include "nsAccessible.h"
++#include "nsAccessibleWrap.h"
+ #include "nsCoreUtils.h"
+ #include "nsWinUtils.h"
+ #include "States.h"
+ 
+ #include "nsString.h"
+ 
+ #include "nsIDOMCSSPrimitiveValue.h"
+ #include "nsIDOMNSRGBAColor.h"
+@@ -74,34 +74,33 @@ CAccessibleComponent::QueryInterface(REF
+ 
+ STDMETHODIMP
+ CAccessibleComponent::get_locationInParent(long *aX, long *aY)
+ {
+ __try {
+   *aX = 0;
+   *aY = 0;
+ 
+-  nsRefPtr<nsAccessible> acc(do_QueryObject(this));
+-  if (!acc)
++  nsAccessibleWrap* acc = static_cast<nsAccessibleWrap>(this);
++  if (acc->IsDefunct())
+     return E_FAIL;
+ 
+   // If the object is not on any screen the returned position is (0,0).
+   PRUint64 state = acc->State();
+   if (state & states::INVISIBLE)
+     return S_OK;
+ 
+   PRInt32 x = 0, y = 0, width = 0, height = 0;
+   nsresult rv = acc->GetBounds(&x, &y, &width, &height);
+   if (NS_FAILED(rv))
+     return GetHRESULT(rv);
+ 
+-  nsCOMPtr<nsIAccessible> parentAcc;
+-  rv = acc->GetParent(getter_AddRefs(parentAcc));
+-  if (NS_FAILED(rv))
+-    return GetHRESULT(rv);
++  nsIAccessible* parentAcc = acc->Parent();
++  if (!parentAcc)
++    return E_FAIL;
+ 
+   // The coordinates of the returned position are relative to this object's
+   // parent or relative to the screen on which this object is rendered if it
+   // has no parent.
+   if (!parentAcc) {
+     *aX = x;
+     *aY = y;
+     return S_OK;
+@@ -121,17 +120,17 @@ CAccessibleComponent::get_locationInPare
+ } __except(nsAccessNodeWrap::FilterA11yExceptions(::GetExceptionCode(), GetExceptionInformation())) { }
+   return E_FAIL;
+ }
+ 
+ STDMETHODIMP
+ CAccessibleComponent::get_foreground(IA2Color* aForeground)
+ {
+ __try {
+-  nsRefPtr<nsAccessible> acc(do_QueryObject(this));
++  nsAccessibleWrap* acc = nsAccessibleWrap(this);
+   if (acc->IsDefunct())
+     return E_FAIL;
+ 
+   nsIFrame* frame = acc->GetFrame();
+   if (frame)
+     *aForeground = frame->GetStyleColor()->mColor;
+ 
+   return S_OK;
+@@ -140,17 +139,17 @@ CAccessibleComponent::get_foreground(IA2
+ 
+   return E_FAIL;
+ }
+ 
+ STDMETHODIMP
+ CAccessibleComponent::get_background(IA2Color* aBackground)
+ {
+ __try {
+-  nsRefPtr<nsAccessible> acc(do_QueryObject(this));
++  nsAccessibleWrap* acc = nsAccessibleWrap(this);
+   if (acc->IsDefunct())
+     return E_FAIL;
+ 
+   nsIFrame* frame = acc->GetFrame();
+   if (frame)
+     *aBackground = frame->GetStyleBackground()->mBackgroundColor;
+ 
+   return S_OK;
