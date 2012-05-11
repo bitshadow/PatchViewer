@@ -21,8 +21,10 @@ function Mapper() {
  *  @param  path full path of patch file
  */
 Mapper.prototype.getContent = function (path) {
-  if (!path)
+  if (!path) {
+    console.log("null path");
     return false;
+  }
 
   return this._data = reader.Read(path);
 };
@@ -31,8 +33,10 @@ Mapper.prototype.getContent = function (path) {
  *  list containg line wise patch
  */
 Mapper.prototype.splitData = function (data) {
-  if (!data)
+  if (!data) {
+    console.log("null data")
     return false;
+  }
 
   var input = data.replace(/\r\n/g, '\n');
   lines = input.split('\n');
@@ -46,8 +50,10 @@ Mapper.prototype.splitData = function (data) {
  */
 Mapper.prototype.generateMap = function (lines) {
 
-  if (lines.length < 1)
+  if (lines.length < 1) {
+    console.log("empty location map");
     return this._locMap;
+  }
 
   var locmap = [];
   var files = 0;
@@ -67,9 +73,9 @@ Mapper.prototype.generateMap = function (lines) {
 /** Read line which contains begins with '@@'.
  *  parse it and return parsed information in
  *  list.
+ *  format :
+ *  { o_s:'37', o_e:'17', m_s:'34', m_e:'15', func: 'abcFunc' }
  *
- *  example : { o_s:'37', o_e:'17', m_s:'34', m_e:'15', func: 'abcFunc' }
- *  which can be read as
  *  origional file : changes starts at : 37
  *                           ends at   : 37 + (17-1) = 53
  *  modified file  : changes starts at : 34
@@ -80,15 +86,19 @@ Mapper.prototype.generateMap = function (lines) {
 Mapper.prototype.getDetails = function (line) {
 
   var doublet = line.startsWith("@@");
-  if(!doublet)
+  if(!doublet) {
+    console.log("line does not contain doublet");
     return false;
+  }
+
   var d = line.split(/@@\ ?/g);
-  d.splice(0,1);
+  d.splice(0, 1);
   d[0] = d[0].replace(/\+/g,'');
   d[0] = d[0].replace(/\-/g,'');
   d[0] = d[0].replace(/,/g,' ');
   d[0] = d[0].split(' ');
-  d[0].splice(4,1)
+  var l = d[0].length - 1;
+  d[0].splice(l, 1)
 
   var obj = {
     o_start : d[0][0],
@@ -101,16 +111,65 @@ Mapper.prototype.getDetails = function (line) {
   return obj;
 };
 
+Mapper.prototype.display = function () {
 
+  var d = this.getContent(process.argv[2]);
+  var l = this.splitData(d);
+  var map =  this.generateMap(l);
 
-Mapper.prototype.DisplayBlock
+  for(var i= map[0]; i< lines.length ; i++)
+  {
+    var diff = this.isDiff(l[i]);
+    if(diff) {
+      console.log(l[i]);
+      i = i+3;
+    }
 
-exports.Mapper = Mapper;
+    var doublet = this.isDoublet(l[i]);
+    if(doublet){
+      var initi = i+1; // we will be back again for origional and modified
+      var map = this.getDetails(l[i]);
+      var oStart = parseInt(map.o_start);
+      var oEnd = parseInt(map.o_end);
+      var mStart = parseInt(map.m_start);
+      var mEnd = parseInt(map.m_end);
+      var func = map.func;
+      console.log("Lines: "+ oStart + "-"+ (oStart+oEnd-1) + " "+ func);
 
-mapper = new Mapper()
-data = mapper.getContent(process.argv[2]);
-lines = mapper.splitData(data);
-mapper.generateMap(lines);
-d = mapper.getDetails(lines[27])
-console.log(d)
+    }
+  }
+};
 
+Mapper.prototype.isDiff = function (line) {
+  return line.startsWith("diff");
+};
+
+Mapper.prototype.isDoublet = function (line) {
+  return line.startsWith("@@");
+}
+
+Mapper.prototype.add = function (a, b) {
+  return a+b;
+};
+
+Mapper.prototype.getData = function () {
+  return this.data;
+};
+
+Mapper.prototype.fileModified = function () {
+  return this.files;
+};
+
+Mapper.prototype.getLines = function () {
+  return this._lines;
+};
+
+Mapper.prototype.getLocMap = function () {
+  return this._locMap;
+};
+
+mapper = new Mapper();
+mapper.display();
+
+//TO DO
+//function for max and min
