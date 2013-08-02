@@ -3,10 +3,11 @@ PatchViewer
 
 Shows the result in terminal after beatifying raw patch.
 
-* **To Install:**
-   - git clone
-*Run
-    - node Mapper.js example.patch
+* **Download:**
+   - $git clone https://github.com/jigneshhk/PatchViewer.git
+
+* **Run:**
+   - $node Mapper.js example.patch
 
 * **snapshot:**
-    -![My image](https://raw.github.com/jigneshhk/PatchViewer)
+    -![My image](https://raw.github.com/jigneshhk/PatchViewer/master/result/result.png)
