@@ -75,7 +75,7 @@ Mapper.prototype.display = function () {
   var d = this.getContent(process.argv[2]);
   var l = this.splitData(d);
 
-  for(var i=0; i< lines.length ; i++)
+  for(var i=0; i< l.length ; i++)
   {
     //if(lines[i].startsWith("/\+/g"))
     switch(lines[i][0]) {
